@@ -3,7 +3,7 @@ using InventoryAndOrderManagementAPI.Models;
 
 namespace InventoryAndOrderManagementAPI.Mapper
 {
-    public static class ProdcutMapper
+    public static class ProductMapper
     {
         public static ProductDto ToProductDto(this Product productModel)
         {
@@ -29,5 +29,14 @@ namespace InventoryAndOrderManagementAPI.Mapper
                 CategoryId = productDto.CategoryId
             };
         }
+
+        public static void UpdateProductModel(this Product product, UpdateProductDto updateProductDto)
+        {
+            product.Name = updateProductDto.Name;
+            product.Description = updateProductDto.Description;
+            product.Price = updateProductDto.Price;
+            product.QuantityInStock = updateProductDto.QuantityInStock;
+        }
+
     }
 }

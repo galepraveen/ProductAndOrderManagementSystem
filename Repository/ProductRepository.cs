@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using InventoryAndOrderManagementAPI.Models;
 using InventoryAndOrderManagementAPI.Dtos.Product;
 using Microsoft.AspNetCore.Http.HttpResults;
+using InventoryAndOrderManagementAPI.Helpers;
+using InventoryAndOrderManagementAPI.Mapper;
 
 namespace InventoryAndOrderManagementAPI.Repository
 {
@@ -52,9 +54,33 @@ namespace InventoryAndOrderManagementAPI.Repository
             return productModel;
         }
 
-        public async Task<List<Product>> GetAllProductsAsync()
+        public async Task<List<Product>> GetAllProductsAsync(ProductQueryObject query)
         {
-            return await _context.Products.ToListAsync();
+
+            var products = _context.Products.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query.Name))
+            {
+                products = products.Where(product => product.Name.Contains(query.Name));
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.SortBy))
+            {
+                var allowedSortProperties = new[] { "Name" };
+
+                if (allowedSortProperties.Contains(query.SortBy))
+                {
+                    products = query.IsDescending ? products.OrderByDescending(product => product.Name) : products.OrderBy(product => product.Name);
+                }
+                else
+                {
+                    products = products.OrderBy(product => product.Name);
+                }
+            }
+
+            var skipNumber = (query.PageNumber - 1) * query.PageSize;
+
+            return await products.Skip(skipNumber).Take(query.PageSize).AsNoTracking().ToListAsync();
         }
 
         public async Task<Product?> GetProductByIdAsync(int id)
@@ -73,10 +99,7 @@ namespace InventoryAndOrderManagementAPI.Repository
 
             if (productModel == null) return null;
 
-            productModel.Name = productDto.Name;
-            productModel.Description = productDto.Description;
-            productModel.Price = productDto.Price;
-            productModel.QuantityInStock = productDto.QuantityInStock;
+            productModel.UpdateProductModel(productDto);
 
             await _context.SaveChangesAsync();
 
@@ -84,3 +107,6 @@ namespace InventoryAndOrderManagementAPI.Repository
         }
     }
 }
+
+
+

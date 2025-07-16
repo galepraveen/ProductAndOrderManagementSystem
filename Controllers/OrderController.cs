@@ -2,11 +2,12 @@
 using InventoryAndOrderManagementAPI.Interfaces;
 using InventoryAndOrderManagementAPI.Mapper;
 using InventoryAndOrderManagementAPI.Models;
+using InventoryAndOrderManagementAPI.Routes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InventoryAndOrderManagementAPI.Controllers
 {
-    [Route("api/orders")]
+    [Route(ApiRoutes.OrderBase)]
     [ApiController]
     public class OrderController : ControllerBase
     {
@@ -30,14 +31,14 @@ namespace InventoryAndOrderManagementAPI.Controllers
             return Ok(orderDtos);
         }
 
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetOrderById([FromRoute] int id)
+        [HttpGet("{orderId:int}")]
+        public async Task<IActionResult> GetOrderById([FromRoute] int orderId)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var orderModel = await _orderRepository.GetOrderByIdAsync(id);
+            var orderModel = await _orderRepository.GetOrderByIdAsync(orderId);
 
             if (orderModel == null) return NotFound();
 
@@ -51,30 +52,30 @@ namespace InventoryAndOrderManagementAPI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            try
-            {
-                var orderModel = orderDto.ConvertToOrderModelFromOrderDto();
-                await _orderRepository.CreateOrderAsync(orderModel);
 
-                return CreatedAtAction(nameof(GetOrderById), new { id = orderModel.OrderId }, orderModel.ToOrderDto());
-            }
-            catch(Exception ex)
-            {
-                return BadRequest(new { messsage = ex.Message });
-            }
+            var orderModel = orderDto.ConvertToOrderModelFromOrderDto();
+            await _orderRepository.CreateOrderAsync(orderModel);
+
+            return CreatedAtAction(nameof(GetOrderById), new { orderId = orderModel.OrderId }, orderModel.ToOrderDto());
         }
 
-        [HttpPatch("{id:int}/status")]
-        public async Task<IActionResult> UpdateOrderStatus([FromRoute] int id, [FromBody] UpdateOrderStatusDto orderStatusDto)
+        [HttpPatch("{orderId:int}/status")]
+        public async Task<IActionResult> UpdateOrderStatus([FromRoute] int orderId, [FromBody] UpdateOrderStatusDto orderStatusDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var updatedOrderModel = await _orderRepository.UpdateOrderStatusAsync(id, orderStatusDto);
+            var updatedOrderModel = await _orderRepository.UpdateOrderStatusAsync(orderId, orderStatusDto);
 
-            if (updatedOrderModel == null) return NotFound($"Order with ID {id} not found");
+            if (updatedOrderModel == null)
+            {
+                return NotFound(new
+                {
+                    message = $"Order with ID {orderId} not found"
+                });
+            }
 
             return Ok(updatedOrderModel.ToOrderDto());
         }

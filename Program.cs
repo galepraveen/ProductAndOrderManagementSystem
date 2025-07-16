@@ -1,6 +1,7 @@
 
 using InventoryAndOrderManagementAPI.Data;
 using InventoryAndOrderManagementAPI.Interfaces;
+using InventoryAndOrderManagementAPI.Middlewares;
 using InventoryAndOrderManagementAPI.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,36 +19,40 @@ namespace InventoryAndOrderManagementAPI
 
             // linking the created DBContext with builder
             //------------------------------------------------------------------------------------------------------
-            builder.Services.AddDbContext<ApplicationDBContext>(options =>
+
+
+            var useIMemory = builder.Configuration.GetValue<bool>("UseInMemoryDb");
+            if (useIMemory)
             {
-                options.UseInMemoryDatabase("InventoryOrderManagement");
-            });
+                builder.Services.AddDbContext<ApplicationDBContext>(options =>
+                {
+                    options.UseInMemoryDatabase("InventoryOrderManagement");
+                });
+            }
+            else
+            {
+                builder.Services.AddDbContext<ApplicationDBContext>(options =>
+                {
+                    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlDB"));
+                });
+            }
             builder.Services.AddControllers();
             builder.Services.AddScoped<IProductRepository, ProductRepository>(); // Dependency Injection
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
             builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
             builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
-
-            builder.Services.Configure<ApiBehaviorOptions>(options =>
+            builder.Services.AddExceptionHandler<AppExceptionHandler>(); // registering the app exception handler dependency
+            builder.Services.AddProblemDetails();
+            builder.Services.AddControllers().AddJsonOptions(options =>
             {
-                options.InvalidModelStateResponseFactory = context =>
-                {
-                    var errors = context.ModelState
-                        .Where(x => x.Value.Errors.Count > 0)
-                        .SelectMany(kvp => kvp.Value.Errors)
-                        .Select(e => e.ErrorMessage)
-                        .ToList();
-
-                    var result = new
-                    {
-                        message = "Validation failed.",
-                        errors = errors
-                    };
-
-                    return new BadRequestObjectResult(result);
-                };
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
 
 
             //------------------------------------------------------------------------------------------------------
@@ -65,10 +70,11 @@ namespace InventoryAndOrderManagementAPI
                 app.UseSwaggerUI();
             }
 
+            app.UseExceptionHandler();
+
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 

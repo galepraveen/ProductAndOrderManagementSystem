@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace InventoryAndOrderManagementAPI.Dtos.Product
 {
@@ -14,6 +15,7 @@ namespace InventoryAndOrderManagementAPI.Dtos.Product
 
         [Required(ErrorMessage = "Price is required.")]
         [Range(0, 10000000, ErrorMessage = "Price must be between range [1 - 10000000]")]
+        [DefaultValue(0)]
         public decimal Price { get; set; }
 
         [Range(0, 10000, ErrorMessage = "QuantityInStock must be between range [1 - 1000")]

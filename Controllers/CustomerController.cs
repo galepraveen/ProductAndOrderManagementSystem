@@ -1,11 +1,13 @@
 ﻿using InventoryAndOrderManagementAPI.Dtos.Customer;
+using InventoryAndOrderManagementAPI.Helpers;
 using InventoryAndOrderManagementAPI.Interfaces;
 using InventoryAndOrderManagementAPI.Mapper;
+using InventoryAndOrderManagementAPI.Routes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InventoryAndOrderManagementAPI.Controllers
 {
-    [Route("/api/customers")]
+    [Route(ApiRoutes.CustomerBase)]
     [ApiController]
     public class CustomerController : ControllerBase
     {
@@ -17,7 +19,7 @@ namespace InventoryAndOrderManagementAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllCustomers()
+        public async Task<IActionResult> GetAllCustomers([FromQuery] ProductQueryObject queryObject)
         {
             if (!ModelState.IsValid)
             {
@@ -30,16 +32,16 @@ namespace InventoryAndOrderManagementAPI.Controllers
         }
 
         [HttpGet]
-        [Route("{id}/orders")]
-        public async Task<IActionResult> GetAllOrdersOfCustomer([FromRoute] int id)
+        [Route("{customerId}/orders")]
+        public async Task<IActionResult> GetAllOrdersOfCustomer([FromRoute] int customerId)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var customerOrders = await _customerRepo.GetAllOrdersOfCustomerAsync(id);
+            var customerOrders = await _customerRepo.GetAllOrdersOfCustomerAsync(customerId);
 
-            if (customerOrders == null) return NotFound($"No orders found for customer with ID: {id}");
+            if (customerOrders == null) return NotFound(new { message = $"No orders found for customer with ID: {customerId}" });
 
             var ordersDto = customerOrders.Select(order => order.ToOrderDto()).ToList();
 

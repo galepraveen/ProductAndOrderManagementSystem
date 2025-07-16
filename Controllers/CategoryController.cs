@@ -1,11 +1,12 @@
 ﻿using InventoryAndOrderManagementAPI.Dtos.Category;
 using InventoryAndOrderManagementAPI.Interfaces;
 using InventoryAndOrderManagementAPI.Mapper;
+using InventoryAndOrderManagementAPI.Routes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InventoryAndOrderManagementAPI.Controllers
 {
-    [Route("/api/categories")]
+    [Route(ApiRoutes.CategoryBase)]
     [ApiController]
     public class CategoryController : ControllerBase
     {

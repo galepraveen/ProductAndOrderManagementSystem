@@ -1,11 +1,13 @@
 ﻿using InventoryAndOrderManagementAPI.Dtos.Product;
+using InventoryAndOrderManagementAPI.Helpers;
 using InventoryAndOrderManagementAPI.Interfaces;
 using InventoryAndOrderManagementAPI.Mapper;
+using InventoryAndOrderManagementAPI.Routes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InventoryAndOrderManagementAPI.Controllers
 {
-    [Route("api/products")]
+    [Route(ApiRoutes.ProductsBase)]
     [ApiController] // It specifies that it's a WebAPI Controller, not MVC Controller that returns views
     public class ProductsController : ControllerBase
     {
@@ -16,28 +18,31 @@ namespace InventoryAndOrderManagementAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllProducts()
+        public async Task<IActionResult> GetAllProducts([FromQuery] ProductQueryObject queryObject)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var products = await _productRepository.GetAllProductsAsync();
+            var products = await _productRepository.GetAllProductsAsync(queryObject);
             var productDtos = products.Select(product => product.ToProductDto());
 
             return Ok(productDtos);
         }
 
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetProductById([FromRoute] int id)
+        [HttpGet("{productId:int}")]
+        public async Task<IActionResult> GetProductById([FromRoute] int productId)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var product = await _productRepository.GetProductByIdAsync(id);
+            var product = await _productRepository.GetProductByIdAsync(productId);
 
-            if (product == null) return NotFound();
+            if (product == null) return NotFound(new
+            {
+                message = $"Product with ID: {productId} not found"
+            });
 
             return Ok(product.ToProductDto());
         }
@@ -45,57 +50,48 @@ namespace InventoryAndOrderManagementAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto productDto)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
-                var productModel = productDto.ConvertToProductModelFromProductDto();
-                await _productRepository.CreateProductAsync(productModel);
+                return BadRequest(ModelState);
+            }
+            var productModel = productDto.ConvertToProductModelFromProductDto();
+            await _productRepository.CreateProductAsync(productModel);
 
-                return CreatedAtAction(nameof(GetProductById), new {id = productModel.ProductId}, productModel.ToProductDto());
-            }
-            catch(Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            return CreatedAtAction(nameof(GetProductById), new {id = productModel.ProductId}, productModel.ToProductDto());
         }
 
         [HttpPut]
-        [Route("{id:int}")]
-        public async Task<IActionResult> UpdateProduct([FromRoute] int id, [FromBody] UpdateProductDto productDto)
+        [Route("{productId:int}")]
+        public async Task<IActionResult> UpdateProduct([FromRoute] int productId, [FromBody] UpdateProductDto productDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var productModel = await _productRepository.UpdateProductAsync(id, productDto);
+            var productModel = await _productRepository.UpdateProductAsync(productId, productDto);
 
-            if (productModel == null) return NotFound();
+            if (productModel == null) return NotFound( new
+            {
+                message = $"Product with ID: {productId} not found"
+            });
 
             return Ok(productModel.ToProductDto());
         }
 
         [HttpDelete]
-        [Route("{id:int}")]
-        public async Task<IActionResult> DeleteProduct([FromRoute] int id)
+        [Route("{productId:int}")]
+        public async Task<IActionResult> DeleteProduct([FromRoute] int productId)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
-                var productModel = await _productRepository.DeleteProductAsync(id);
-
-                if (productModel == null) return NotFound();
-
+                return BadRequest(ModelState);
             }
-            catch(Exception ex)
+            var productModel = await _productRepository.DeleteProductAsync(productId);
+
+            if (productModel == null) return NotFound( new
             {
-                return BadRequest(new { message = ex.Message });
-            }
+                message = $"Product with ID: {productId} not found"
+            });
             
             return NoContent();
         }

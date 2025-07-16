@@ -23,13 +23,19 @@ namespace InventoryAndOrderManagementAPI.Repository
 
         public async Task<List<Customer>> GetAllCustomersAsync()
         {
-            return await _context.Customers.ToListAsync();
+            return await _context.Customers.AsNoTracking().ToListAsync();
         }
 
-        public async Task<List<Order> > GetAllOrdersOfCustomerAsync(int id)
+        public async Task<List<Order>> GetAllOrdersOfCustomerAsync(int customerId)
         {
+            var customer = await _context.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.CustomerId == customerId);
 
-            var customerOrders = await _context.Orders.Where(order => order.CustomerId == id).ToListAsync();
+            if (customer == null)
+            {
+                throw new ArgumentException($"Customer Id: {customerId} does not exists");
+            }
+
+            var customerOrders = await _context.Orders.Where(order => order.CustomerId == customerId).AsNoTracking().ToListAsync();
 
             return customerOrders;
         }

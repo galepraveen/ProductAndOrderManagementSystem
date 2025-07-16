@@ -25,5 +25,10 @@ namespace InventoryAndOrderManagementAPI.Mapper
                 Status = orderDto.Status
             };
         }
+
+        public static void UpdateOrderStatus(this Order order, UpdateOrderStatusDto updateOrderDto)
+        {
+            order.Status = updateOrderDto.Status;
+        }
     }
 }

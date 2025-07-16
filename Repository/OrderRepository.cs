@@ -1,6 +1,7 @@
 ﻿using InventoryAndOrderManagementAPI.Data;
 using InventoryAndOrderManagementAPI.Dtos.Order;
 using InventoryAndOrderManagementAPI.Interfaces;
+using InventoryAndOrderManagementAPI.Mapper;
 using InventoryAndOrderManagementAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,7 +32,7 @@ namespace InventoryAndOrderManagementAPI.Repository
 
         public async Task<List<Order>> GetAllOrdersAsync()
         {
-            return await _context.Orders.ToListAsync();
+            return await _context.Orders.AsNoTracking().ToListAsync();
         }
 
         public async Task<Order?> GetOrderByIdAsync(int id)
@@ -45,7 +46,7 @@ namespace InventoryAndOrderManagementAPI.Repository
 
             if (orderModel == null) return null;
 
-            orderModel.Status = orderStatusDto.Status;
+            orderModel.UpdateOrderStatus(orderStatusDto);
 
             await _context.SaveChangesAsync();
 

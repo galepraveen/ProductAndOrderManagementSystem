@@ -24,7 +24,7 @@ namespace InventoryAndOrderManagementAPI.Repository
 
         public async Task<List<Category>> GetAllCategoriesAsync()
         {
-            return await _context.Categories.ToListAsync();
+            return await _context.Categories.AsNoTracking().ToListAsync();
         }
     }
 }
